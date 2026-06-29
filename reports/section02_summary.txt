@@ -1,0 +1,47 @@
+
+SECTION 02 - DATASET FAMILIARIZATION SUMMARY
+Bangkok, Thailand - Inside Airbnb Dataset
+Scraped: September 2025
+=============================================
+
+FILES LOADED:
+- listings_core:     28,806 rows × 79 columns
+- listings_detailed: 28,806 rows × 79 columns  
+- calendar:          10,514,202 rows × 7 columns
+- reviews:           583,333 rows × 6 columns
+- neighbourhoods:    50 rows × 2 columns
+
+KEY RELATIONSHIPS:
+- listings.id → calendar.listing_id (100% match)
+- listings.id → reviews.listing_id (65% match)
+- 10,090 listings have no reviews (35%)
+
+ROOM TYPE DISTRIBUTION:
+- Entire home/apt: 18,845 (65.4%)
+- Private room:     9,224 (32.0%)
+- Hotel room:         387  (1.3%)
+- Shared room:        350  (1.2%)
+
+TOP NEIGHBOURHOODS:
+- Vadhana:      4,305 listings
+- Khlong Toei:  3,620 listings
+- Huai Khwang:  3,460 listings
+
+HOST STATS:
+- Total unique hosts: 8,874
+- Superhosts: 7,975 (29%)
+- Avg listings per host: 3.2
+
+DATASET LIMITATIONS:
+1. Snapshot data - scraped Sep 26-28 2025
+2. minimum_nights outliers up to 1,115 days
+3. 2,986 listings with 0 availability
+4. 5,533 listings missing price (19%)
+5. Calendar price columns 100% null
+6. 10,090 listings missing review scores (35%)
+
+ASSUMPTIONS:
+- listings.csv and listings.csv.gz contain identical data
+- neighbourhood_cleansed is more reliable than neighbourhood
+- Listings with 0 availability are inactive or fully booked
+- Missing review scores = listings with 0 reviews

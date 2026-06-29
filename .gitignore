@@ -1,0 +1,7 @@
+venv/
+data/
+reports/*.pdf
+reports/plots/
+notebooks/.ipynb_checkpoints/
+*.gz
+*.duckdb

@@ -1,0 +1,52 @@
+2026-06-25 15:01:12,464 | INFO | Starting ingestion for: bangkok
+2026-06-25 15:01:12,464 | INFO | Downloading: https://data.insideairbnb.com/thailand/central-thailand/bangkok/2025-09-27/data/listings.csv.gz
+2026-06-25 15:01:14,256 | ERROR | Failed to download https://data.insideairbnb.com/thailand/central-thailand/bangkok/2025-09-27/data/listings.csv.gz: 403 Client Error: Forbidden for url: https://data.insideairbnb.com/thailand/central-thailand/bangkok/2025-09-27/data/listings.csv.gz
+2026-06-25 15:01:14,260 | INFO | Downloading: https://data.insideairbnb.com/thailand/central-thailand/bangkok/2025-09-27/data/calendar.csv.gz
+2026-06-25 15:01:15,465 | ERROR | Failed to download https://data.insideairbnb.com/thailand/central-thailand/bangkok/2025-09-27/data/calendar.csv.gz: 403 Client Error: Forbidden for url: https://data.insideairbnb.com/thailand/central-thailand/bangkok/2025-09-27/data/calendar.csv.gz
+2026-06-25 15:01:15,470 | INFO | Downloading: https://data.insideairbnb.com/thailand/central-thailand/bangkok/2025-09-27/data/reviews.csv.gz
+2026-06-25 15:01:16,738 | ERROR | Failed to download https://data.insideairbnb.com/thailand/central-thailand/bangkok/2025-09-27/data/reviews.csv.gz: 403 Client Error: Forbidden for url: https://data.insideairbnb.com/thailand/central-thailand/bangkok/2025-09-27/data/reviews.csv.gz
+2026-06-25 15:01:16,739 | INFO | Downloading: https://data.insideairbnb.com/thailand/central-thailand/bangkok/2025-09-27/data/neighbourhoods.csv
+2026-06-25 15:01:18,103 | ERROR | Failed to download https://data.insideairbnb.com/thailand/central-thailand/bangkok/2025-09-27/data/neighbourhoods.csv: 403 Client Error: Forbidden for url: https://data.insideairbnb.com/thailand/central-thailand/bangkok/2025-09-27/data/neighbourhoods.csv
+2026-06-25 15:01:18,105 | INFO | Downloading: https://data.insideairbnb.com/thailand/central-thailand/bangkok/2025-09-27/data/neighbourhoods.geojson
+2026-06-25 15:01:19,266 | ERROR | Failed to download https://data.insideairbnb.com/thailand/central-thailand/bangkok/2025-09-27/data/neighbourhoods.geojson: 403 Client Error: Forbidden for url: https://data.insideairbnb.com/thailand/central-thailand/bangkok/2025-09-27/data/neighbourhoods.geojson
+2026-06-25 15:01:19,281 | INFO | Metadata saved for bangkok
+2026-06-25 15:01:19,282 | INFO | Ingestion complete for bangkok!
+2026-06-25 15:03:59,813 | INFO | Starting ingestion for: bangkok
+2026-06-25 15:03:59,828 | INFO | Copied from data folder: listings.csv.gz
+2026-06-25 15:04:00,093 | INFO | Extracted: D:\My projects\Data Engenneing Intern Project\airbnb-analysis\data\bangkok\listings.csv
+2026-06-25 15:04:00,112 | INFO | Copied from data folder: calendar.csv.gz
+2026-06-25 15:04:00,815 | INFO | Extracted: D:\My projects\Data Engenneing Intern Project\airbnb-analysis\data\bangkok\calendar.csv
+2026-06-25 15:04:00,927 | INFO | Copied from data folder: reviews.csv.gz
+2026-06-25 15:04:01,641 | INFO | Extracted: D:\My projects\Data Engenneing Intern Project\airbnb-analysis\data\bangkok\reviews.csv
+2026-06-25 15:04:01,653 | INFO | Copied from data folder: neighbourhoods.csv
+2026-06-25 15:04:01,658 | INFO | Copied from data folder: neighbourhoods.geojson
+2026-06-25 15:04:01,723 | INFO | Metadata saved for bangkok
+2026-06-25 15:04:01,723 | INFO | Ingestion complete for bangkok!
+2026-06-25 15:04:01,724 | INFO | Files available in: D:\My projects\Data Engenneing Intern Project\airbnb-analysis\data\bangkok
+2026-06-26 11:50:48,867 | INFO | ==================================================
+2026-06-26 11:50:48,867 | INFO | PIPELINE START: BANGKOK
+2026-06-26 11:50:48,868 | INFO | ==================================================
+2026-06-26 11:50:48,869 | INFO | [INGEST] Starting for bangkok
+2026-06-26 11:50:48,869 | INFO | [INGEST] Already exists: listings.csv.gz
+2026-06-26 11:50:48,874 | INFO | [INGEST] Already exists: calendar.csv.gz
+2026-06-26 11:50:48,874 | INFO | [INGEST] Already exists: reviews.csv.gz
+2026-06-26 11:50:48,875 | INFO | [INGEST] Already exists: neighbourhoods.csv
+2026-06-26 11:50:48,876 | INFO | [INGEST] Already exists: neighbourhoods.geojson
+2026-06-26 11:50:48,877 | INFO | [INGEST] Complete for bangkok
+2026-06-26 11:50:48,877 | INFO | [LOAD] Loading raw datasets
+2026-06-26 11:51:05,462 | INFO | [LOAD] listings=(28806, 79) calendar=(10514202, 7) reviews=(583333, 6)
+2026-06-26 11:51:05,462 | INFO | [CLEAN] Starting cleaning
+2026-06-26 11:51:11,021 | INFO | [CLEAN] Done. listings=(28806, 81) calendar=(10514202, 8) reviews=(583263, 6)
+2026-06-26 11:51:11,021 | INFO | [ENRICH] Starting enrichment
+2026-06-26 11:51:11,663 | INFO | [ENRICH] Master table shape: (28806, 101)
+2026-06-26 11:51:11,664 | INFO | [SAVE] Saving cleaned outputs
+2026-06-26 11:51:14,202 | INFO | [SAVE] All outputs saved!
+2026-06-26 11:51:14,202 | INFO | [DUCKDB] Loading star schema
+2026-06-26 11:51:14,633 | INFO | [DUCKDB] data_lineage: 5 rows
+2026-06-26 11:51:14,634 | INFO | [DUCKDB] dim_date: 367 rows
+2026-06-26 11:51:14,636 | INFO | [DUCKDB] dim_host: 8,874 rows
+2026-06-26 11:51:14,637 | INFO | [DUCKDB] dim_neighbourhood: 50 rows
+2026-06-26 11:51:14,638 | INFO | [DUCKDB] dim_property: 85 rows
+2026-06-26 11:51:14,639 | INFO | [DUCKDB] fact_listings: 28,806 rows
+2026-06-26 11:51:14,739 | INFO | [DUCKDB] Saved to D:\My projects\Data Engenneing Intern Project\airbnb-analysis\data\bangkok\airbnb_bangkok.duckdb
+2026-06-26 11:51:14,739 | INFO | PIPELINE COMPLETE in 25s
