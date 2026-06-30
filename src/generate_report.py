@@ -141,7 +141,7 @@ def build_report():
     story.append(Paragraph("Bangkok Airbnb Market Intelligence", title_style))
     story.append(Spacer(1, 1*cm))
     story.append(Paragraph("Data Engineering and Analytics Report", subtitle_style))
-    story.append(Spacer(1, 0.5*cm))
+    story.append(Spacer(1, 0.4*cm))
 
     cover_data = [
         ['Prepared for',  'Expernetic (Pvt) Ltd'],
