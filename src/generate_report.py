@@ -12,7 +12,9 @@ from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, PageBreak,
     Table, TableStyle, HRFlowable, Image
 )
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
+from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate
+from reportlab.lib.units import cm
 import os
 
 # ── Paths ──────────────────────────────────────────────────
@@ -29,8 +31,7 @@ GRAY       = colors.HexColor('#616161')
 LIGHT_GRAY = colors.HexColor('#f5f5f5')
 WHITE      = colors.white
 
-# ── Page width available (A4 - margins) ───────────────────
-PAGE_W = 17*cm  # 21cm - 2cm*2 margins
+PAGE_W = 17*cm
 
 # ── Styles ─────────────────────────────────────────────────
 styles = getSampleStyleSheet()
@@ -71,8 +72,38 @@ highlight_style = ParagraphStyle('Highlight',
     backColor=LIGHT_BLUE, borderPad=6,
     alignment=TA_JUSTIFY, leading=13)
 
+toc_style = ParagraphStyle('TOC',
+    fontSize=10, fontName='Helvetica',
+    textColor=BLUE, spaceAfter=6,
+    leftIndent=10, leading=16)
+
+# ── Page number footer ─────────────────────────────────────
+def add_page_number(canvas, doc):
+    """Add page number at bottom of every page except cover."""
+    page_num = canvas.getPageNumber()
+    if page_num == 1:
+        return
+    canvas.saveState()
+    canvas.setFont('Helvetica', 8)
+    canvas.setFillColor(GRAY)
+    # Left: report title
+    canvas.drawString(2*cm, 1.2*cm, "Bangkok Airbnb Market Intelligence | Lukshan Sadeepa")
+    # Right: page number
+    canvas.drawRightString(19*cm, 1.2*cm, f"Page {page_num - 1}")
+    # Top line
+    canvas.setStrokeColor(LIGHT_BLUE)
+    canvas.setLineWidth(0.5)
+    canvas.line(2*cm, 1.5*cm, 19*cm, 1.5*cm)
+    canvas.restoreState()
+
 # ── Helper functions ───────────────────────────────────────
 def section_header(text, number):
+    if number == '':
+        return [
+            HRFlowable(width="100%", thickness=2, color=BLUE, spaceAfter=4),
+            Paragraph(f"{text}", h1_style),
+            HRFlowable(width="100%", thickness=0.5, color=LIGHT_BLUE, spaceAfter=8),
+        ]
     return [
         HRFlowable(width="100%", thickness=2, color=BLUE, spaceAfter=4),
         Paragraph(f"{number}. {text}", h1_style),
@@ -104,26 +135,50 @@ def add_image(filename, width=PAGE_W, caption=None):
     return items
 
 def make_table(data, col_widths=None, header_color=BLUE):
-    t = Table(data, colWidths=col_widths)
+    # Convert to Paragraph for word wrapping
+    formatted_data = []
+    for i, row in enumerate(data):
+        formatted_row = []
+        for cell in row:
+            if i == 0:
+                formatted_row.append(Paragraph(str(cell), ParagraphStyle(
+                    'TH', fontSize=9, fontName='Helvetica-Bold',
+                    textColor=WHITE, alignment=TA_CENTER, leading=12)))
+            else:
+                formatted_row.append(Paragraph(str(cell), ParagraphStyle(
+                    'TD', fontSize=8.5, fontName='Helvetica',
+                    textColor=colors.black, alignment=TA_CENTER, leading=12)))
+        formatted_data.append(formatted_row)
+
+    t = Table(formatted_data, colWidths=col_widths)
     style = TableStyle([
         ('BACKGROUND',    (0,0), (-1,0), header_color),
-        ('TEXTCOLOR',     (0,0), (-1,0), WHITE),
-        ('FONTNAME',      (0,0), (-1,0), 'Helvetica-Bold'),
-        ('FONTSIZE',      (0,0), (-1,0), 9),
         ('ALIGN',         (0,0), (-1,-1), 'CENTER'),
         ('VALIGN',        (0,0), (-1,-1), 'MIDDLE'),
-        ('FONTNAME',      (0,1), (-1,-1), 'Helvetica'),
-        ('FONTSIZE',      (0,1), (-1,-1), 8.5),
         ('ROWBACKGROUNDS',(0,1), (-1,-1), [WHITE, LIGHT_GRAY]),
         ('GRID',          (0,0), (-1,-1), 0.4, colors.grey),
         ('TOPPADDING',    (0,0), (-1,-1), 5),
         ('BOTTOMPADDING', (0,0), (-1,-1), 5),
         ('LEFTPADDING',   (0,0), (-1,-1), 4),
         ('RIGHTPADDING',  (0,0), (-1,-1), 4),
-        ('WORDWRAP',      (0,0), (-1,-1), 1),
     ])
     t.setStyle(style)
     return t
+
+# ── Clickable TOC entry ────────────────────────────────────
+def toc_entry(number, title, page, indent=0):
+    """Create a clickable TOC entry with dots."""
+    link = f'<link href="#{number}" color="{BLUE.hexval()}">'
+    dots = '.' * 80
+    text = f'{link}{number}. {title}</link>'
+    return Paragraph(
+        f'<font color="{BLUE.hexval()}">{number}.</font> '
+        f'<a href="#{number}" color="#1976d2">{title}</a>',
+        ParagraphStyle('TOCEntry',
+            fontSize=10, fontName='Helvetica',
+            textColor=BLUE, spaceAfter=6,
+            leftIndent=indent*cm, leading=16)
+    )
 
 # ══════════════════════════════════════════════════════════
 # BUILD REPORT
@@ -132,7 +187,7 @@ def build_report():
     doc = SimpleDocTemplate(
         OUTPUT_PATH, pagesize=A4,
         rightMargin=2*cm, leftMargin=2*cm,
-        topMargin=2*cm, bottomMargin=2*cm
+        topMargin=2*cm, bottomMargin=2.5*cm
     )
     story = []
 
@@ -145,7 +200,7 @@ def build_report():
 
     cover_data = [
         ['Prepared for',  'Expernetic (Pvt) Ltd'],
-        ['Prepared by',   'Lukshan Sadeepa Karunarathna'],
+        ['Prepared by',   'Lukshan Sadeepa'],
         ['Role',          'Data Engineer Intern Candidate'],
         ['Dataset',       'Inside Airbnb - Bangkok, Thailand'],
         ['Data Period',   'Scraped September 2025'],
@@ -161,7 +216,38 @@ def build_report():
     ))
     story.append(PageBreak())
 
+    # ── TABLE OF CONTENTS ──────────────────────────────────
+    story += section_header("Table of Contents", '')
+    story.append(spacer(0.3))
+
+    toc_entries = [
+        ('1', 'Executive Summary'),
+        ('2', 'Objectives and Scope'),
+        ('3', 'Dataset Overview'),
+        ('4', 'Methodology'),
+        ('5', 'Engineering Approach'),
+        ('6', 'EDA Findings'),
+        ('7', 'Statistical Findings'),
+        ('8', 'Data Science Experiments'),
+        ('9', 'Business Recommendations'),
+        ('10', 'Limitations and Caveats'),
+        ('11', 'Future Improvements'),
+        ('12', 'Reflection'),
+        ('A', 'Appendix A: AI Usage Disclosure'),
+    ]
+
+    for num, title in toc_entries:
+        story.append(Paragraph(
+            f'<a href="#{num}" color="#1976d2"><b>{num}.</b> {title}</a>',
+            ParagraphStyle('TOCEntry', fontSize=10.5,
+                fontName='Helvetica', textColor=BLUE,
+                spaceAfter=7, leftIndent=5, leading=16)
+        ))
+
+    story.append(PageBreak())
+
     # ── 1. EXECUTIVE SUMMARY ───────────────────────────────
+    story.append(Paragraph('<a name="1"/>', body_style))
     story += section_header("Executive Summary", 1)
     story.append(body(
         "This report delivers a comprehensive market intelligence analysis of Bangkok's "
@@ -196,6 +282,7 @@ def build_report():
     story.append(PageBreak())
 
     # ── 2. OBJECTIVES & SCOPE ──────────────────────────────
+    story.append(Paragraph('<a name="2"/>', body_style))
     story += section_header("Objectives and Scope", 2)
     story.append(body(
         "The primary objective is to transform raw Inside Airbnb data into actionable "
@@ -230,6 +317,7 @@ def build_report():
     story.append(PageBreak())
 
     # ── 3. DATASET OVERVIEW ────────────────────────────────
+    story.append(Paragraph('<a name="3"/>', body_style))
     story += section_header("Dataset Overview", 3)
     story.append(subsection_header("Data Source"))
     story.append(body(
@@ -249,14 +337,12 @@ def build_report():
     story.append(make_table(files_data,
         col_widths=[4.5*cm, 2.5*cm, 1.5*cm, 8.5*cm]))
     story.append(spacer())
-
     story.append(subsection_header("Key Relationships"))
     story.append(body(
         "listings.id is the primary key. calendar.listing_id achieves 100% match "
         "(all 28,806 listings have calendar entries). reviews.listing_id matches 18,716 "
         "listings (65%) — 35% are new or inactive with no review history."
     ))
-
     story.append(subsection_header("Dataset Limitations"))
     limitations = [
         "Snapshot data only — scraped Sep 26-28, 2025; does not reflect real-time changes.",
@@ -272,6 +358,7 @@ def build_report():
     story.append(PageBreak())
 
     # ── 4. METHODOLOGY ─────────────────────────────────────
+    story.append(Paragraph('<a name="4"/>', body_style))
     story += section_header("Methodology", 4)
     story.append(body(
         "The analytical approach follows a structured data engineering workflow: "
@@ -294,6 +381,7 @@ def build_report():
     story.append(PageBreak())
 
     # ── 5. ENGINEERING APPROACH ────────────────────────────
+    story.append(Paragraph('<a name="5"/>', body_style))
     story += section_header("Engineering Approach", 5)
     story.append(subsection_header("Pipeline Architecture"))
     story.append(body(
@@ -301,7 +389,6 @@ def build_report():
         "clean, enrich, and load-to-DuckDB. It completes end-to-end in 25 seconds and "
         "is configurable for any Inside Airbnb city with minimal code changes."
     ))
-
     story.append(subsection_header("Star Schema Design"))
     schema_data = [
         ['Table', 'Type', 'Rows', 'Key Columns'],
@@ -319,7 +406,6 @@ def build_report():
     story.append(make_table(schema_data,
         col_widths=[3.5*cm, 3*cm, 2*cm, 8.5*cm]))
     story.append(spacer())
-
     story.append(subsection_header("Engineering Decision Log"))
     decisions = [
         "DuckDB over PostgreSQL: Zero-configuration setup, excellent analytical query performance, no server requirement.",
@@ -333,8 +419,8 @@ def build_report():
     story.append(PageBreak())
 
     # ── 6. EDA FINDINGS ────────────────────────────────────
+    story.append(Paragraph('<a name="6"/>', body_style))
     story += section_header("EDA Findings", 6)
-
     story.append(subsection_header("6.1 Price Distribution"))
     story += add_image('fig01_price_distribution.png',
         caption='Figure 1: Price distribution and room type comparison')
@@ -343,7 +429,6 @@ def build_report():
         "indicates luxury listings pulling the average up. Entire homes command median "
         "THB 1,479 while shared rooms cluster at median THB 360."
     ))
-
     story.append(subsection_header("6.2 Neighbourhood Pricing"))
     story += add_image('fig02_neighbourhood_pricing.png',
         caption='Figure 2: Neighbourhood pricing and occupancy analysis')
@@ -353,7 +438,6 @@ def build_report():
         "neighbourhoods consistently achieve higher occupancy rates."
     ))
     story.append(PageBreak())
-
     story.append(subsection_header("6.3 Seasonal Trends"))
     story += add_image('fig03_seasonal_trends.png',
         caption='Figure 3: Monthly occupancy rates and annual review volume')
@@ -363,7 +447,6 @@ def build_report():
         "in 2024. The 2025 partial year shows continued strong demand."
     ))
     story.append(PageBreak())
-
     story.append(subsection_header("6.4 Host Analysis"))
     story += add_image('fig04_host_analysis.png',
         caption='Figure 4: Host portfolio distribution and market concentration')
@@ -373,7 +456,6 @@ def build_report():
         "Hosts with 5-10 years tenure achieve the highest occupancy rates."
     ))
     story.append(PageBreak())
-
     story.append(subsection_header("6.5 Review Analysis"))
     story += add_image('fig05_review_analysis.png',
         caption='Figure 5: Review scores and sub-dimension analysis')
@@ -385,6 +467,7 @@ def build_report():
     story.append(PageBreak())
 
     # ── 7. STATISTICAL FINDINGS ────────────────────────────
+    story.append(Paragraph('<a name="7"/>', body_style))
     story += section_header("Statistical Findings", 7)
     story.append(subsection_header("7.1 Hypothesis Testing Results"))
     hyp_data = [
@@ -408,7 +491,6 @@ def build_report():
         "H3 shows only THB 17 price difference. H5 shows only 0.3% occupancy difference "
         "(31.2% vs 31.5%) — Bangkok demand does not follow a weekend pattern."
     ))
-
     story.append(subsection_header("7.2 OLS Regression - Price Drivers"))
     story += add_image('fig07_regression.png',
         caption='Figure 7: OLS regression coefficients and residual plot')
@@ -433,6 +515,7 @@ def build_report():
     story.append(PageBreak())
 
     # ── 8. DATA SCIENCE EXPERIMENTS ───────────────────────
+    story.append(Paragraph('<a name="8"/>', body_style))
     story += section_header("Data Science Experiments", 8)
     story.append(subsection_header("8.1 Price Prediction Models"))
     ml_data = [
@@ -453,7 +536,6 @@ def build_report():
     story += add_image('fig08_price_prediction.png',
         caption='Figure 8: Model comparison, SHAP importance, actual vs predicted')
     story.append(PageBreak())
-
     story.append(subsection_header("8.2 Listing Segmentation (K-Means K=6)"))
     story.append(body(
         "K-Means clustering with K=6 (silhouette score=0.377) identifies six distinct "
@@ -463,7 +545,6 @@ def build_report():
     story += add_image('fig09b_clusters.png',
         caption='Figure 9: Listing segments by price and occupancy')
     story.append(PageBreak())
-
     story.append(subsection_header("8.3 Model Generalization and Bias"))
     story.append(body(
         "XGBoost generalizes well across Bangkok's top neighbourhoods, achieving R2 > 0.7 "
@@ -475,30 +556,32 @@ def build_report():
     story.append(PageBreak())
 
     # ── 9. BUSINESS RECOMMENDATIONS ───────────────────────
+    story.append(Paragraph('<a name="9"/>', body_style))
     story += section_header("Business Recommendations", 9)
     recs_data = [
-    ['Stakeholder', 'Recommendation', 'Evidence'],
-    ['New Hosts',
-     'Price THB 1,000-2,500\nand pursue Superhost status',
-     'Median THB 1,379;\nSuperhosts: 31.6% vs 25.4% occupancy'],
-    ['Existing Hosts',
-     'Dynamic pricing:\n+20-30% Jul-Sep,\ndiscounts Feb-Mar',
-     'Sep 43.2% vs Mar 23.4%\n— 20 point seasonal swing'],
-    ['Property Investors',
-     'Target Vadhana,\nKhlong Toei, Bang Rak',
-     'Vadhana generates\nTHB 1.45B annual revenue'],
-    ['Platform Operators',
-     'Investigate Value score gap\n(lowest dimension at 4.647)',
-     'Guests rate value below\nall other dimensions'],
-    ['Revenue Strategists',
-     'Focus on entire home listings\n— 37% price premium confirmed',
-     'Entire home THB 1,479\nvs private room THB 1,080'],
+        ['Stakeholder', 'Recommendation', 'Evidence'],
+        ['New Hosts',
+         'Price THB 1,000-2,500\nand pursue Superhost status',
+         'Median THB 1,379;\nSuperhosts: 31.6% vs 25.4% occupancy'],
+        ['Existing Hosts',
+         'Dynamic pricing:\n+20-30% Jul-Sep,\ndiscounts Feb-Mar',
+         'Sep 43.2% vs Mar 23.4%\n20 point seasonal swing'],
+        ['Property Investors',
+         'Target Vadhana,\nKhlong Toei, Bang Rak',
+         'Vadhana generates\nTHB 1.45B annual revenue'],
+        ['Platform Operators',
+         'Investigate Value score gap\n(lowest dimension at 4.647)',
+         'Guests rate value below\nall other dimensions'],
+        ['Revenue Strategists',
+         'Focus on entire home listings\n37% price premium confirmed',
+         'Entire home THB 1,479\nvs private room THB 1,080'],
     ]
     story.append(make_table(recs_data,
         col_widths=[3*cm, 7*cm, 7*cm]))
     story.append(PageBreak())
 
     # ── 10. LIMITATIONS & CAVEATS ─────────────────────────
+    story.append(Paragraph('<a name="10"/>', body_style))
     story += section_header("Limitations and Caveats", 10)
     caveats = [
         "Revenue estimates are approximations: calendar price data is 100% null, so revenue = listing_price x booked_days.",
@@ -513,6 +596,7 @@ def build_report():
     story.append(PageBreak())
 
     # ── 11. FUTURE IMPROVEMENTS ───────────────────────────
+    story.append(Paragraph('<a name="11"/>', body_style))
     story += section_header("Future Improvements", 11)
     improvements = [
         "Log-transformed price model or neural network for luxury segment (THB 10,000+).",
@@ -528,6 +612,7 @@ def build_report():
     story.append(PageBreak())
 
     # ── 12. REFLECTION ────────────────────────────────────
+    story.append(Paragraph('<a name="12"/>', body_style))
     story += section_header("Reflection", 12)
     story.append(body(
         "This assignment was approached with deliberate focus on depth. Sections 02-06 "
@@ -541,14 +626,15 @@ def build_report():
         "the star schema architecture."
     ))
     story.append(body(
-        "OLS regression was selected over gradient boosting for interpretability in "
-        "statistical analysis — coefficients are more actionable for non-technical "
-        "stakeholders than SHAP values alone. XGBoost was then applied in Section 06 "
-        "to demonstrate improved predictive power (R2: 0.40 to 0.61)."
+        "OLS regression was selected for interpretability in statistical analysis. "
+        "XGBoost was then applied in Section 08 to demonstrate improved predictive "
+        "power (R2: 0.40 to 0.61). Sections 07 and 08 (AI/LLM, Open Innovation) "
+        "were not completed due to time constraints but future plans are in Section 11."
     ))
     story.append(PageBreak())
 
     # ── APPENDIX A: AI USAGE ──────────────────────────────
+    story.append(Paragraph('<a name="A"/>', body_style))
     story += section_header("Appendix A: AI Usage Disclosure", 'A')
     story.append(body(
         "In accordance with Expernetic's AI Tools Usage Policy (Section 10), "
@@ -578,7 +664,8 @@ def build_report():
     story.append(make_table(ai_data, col_widths=[4.5*cm, 12.5*cm]))
 
     # ── BUILD ──────────────────────────────────────────────
-    doc.build(story)
+    doc.build(story, onFirstPage=add_page_number,
+              onLaterPages=add_page_number)
     print(f"Report saved to: {OUTPUT_PATH}")
 
 if __name__ == "__main__":
